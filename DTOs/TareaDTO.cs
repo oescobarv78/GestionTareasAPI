@@ -41,4 +41,12 @@ namespace GestionTareasAPI.DTOs
         public DateTime FechaCreacion { get; set; }
         public DateTime FechaVencimiento { get; set; }
     }
+
+    // DTO para la API externa
+    public class TareaExternaDTO
+    {
+        public int ExternalId { get; set; }
+        public string Titulo { get; set; } = string.Empty;
+        public bool Completado { get; set; }
+    }
 }
