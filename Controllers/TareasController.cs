@@ -18,9 +18,50 @@ namespace GestionTareasAPI.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<TareaResponseDTO>>> GetTareas()
+        public async Task<ActionResult<IEnumerable<TareaResponseDTO>>> GetTareas(
+            [FromQuery] string? estado,
+            [FromQuery] string? prioridad,
+            [FromQuery] DateTime? fechaInicio,
+            [FromQuery] DateTime? fechaFin)
         {
-            var tareas = await _context.Tareas.ToListAsync();
+            if (fechaInicio.HasValue && fechaFin.HasValue && fechaInicio > fechaFin)
+                return BadRequest(new { mensaje = "fechaInicio no puede ser mayor que fechaFin" });
+
+            if (!string.IsNullOrEmpty(estado))
+            {
+                var estadosValidos = new[] { "Pendiente", "EnProceso", "Completada" };
+                if (!estadosValidos.Contains(estado))
+                    return BadRequest(new { mensaje = $"Estado no valido. Valores permitidos: {string.Join(", ", estadosValidos)}" });
+            }
+
+            if (!string.IsNullOrEmpty(prioridad))
+            {
+                var prioridadesValidas = new[] { "Baja", "Media", "Alta" };
+                if (!prioridadesValidas.Contains(prioridad))
+                    return BadRequest(new { mensaje = $"Prioridad no valida. Valores permitidos: {string.Join(", ", prioridadesValidas)}" });
+            }
+
+            var query = _context.Tareas.AsQueryable();
+
+            if (!string.IsNullOrEmpty(estado))
+            {
+                var estadoEnum = Enum.Parse<EstadoTarea>(estado);
+                query = query.Where(t => t.Estado == estadoEnum);
+            }
+
+            if (!string.IsNullOrEmpty(prioridad))
+            {
+                var prioridadEnum = Enum.Parse<PrioridadTarea>(prioridad);
+                query = query.Where(t => t.Prioridad == prioridadEnum);
+            }
+
+            if (fechaInicio.HasValue)
+                query = query.Where(t => t.FechaVencimiento >= fechaInicio.Value);
+
+            if (fechaFin.HasValue)
+                query = query.Where(t => t.FechaVencimiento <= fechaFin.Value);
+
+            var tareas = await query.ToListAsync();
             return Ok(tareas.Select(t => MapearATareaResponse(t)));
         }
 
