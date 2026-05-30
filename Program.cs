@@ -1,13 +1,16 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using GestionTareasAPI.Data;
+using GestionTareasAPI.MLModels;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Registra HttpClient para consumir APIs externas
 builder.Services.AddHttpClient();
+
+// Registra el servicio de ML.NET como Singleton
+builder.Services.AddSingleton<SentimientoService>();
 
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
